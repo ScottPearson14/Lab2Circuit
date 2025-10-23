@@ -1,0 +1,16 @@
+Questions we are asking after midpoint checkoff:
+
+1. Do we need to use software filtering?
+- No
+
+
+2. Do we need to use both photodiodes?
+- Use both so it will be better.
+
+
+Final checkoff
+1. Transmitter and receiver should say 'hey this is blocked' if it is blocked
+- only 1 email, not just spamming
+
+2. Recevier should be = or better / measureed by distance
+- has to beat 14.5 cm
