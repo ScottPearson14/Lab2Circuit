@@ -1,0 +1,52 @@
+// Voltage detector for electric eye
+const int sensorPin = A0;
+const float VREF = 5.0;
+const int ADC_RES = 1023;
+const unsigned long SAMPLE_WINDOW_MS = 10;
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+  Serial.println("Start measurement:");
+}
+
+void loop() {
+  unsigned long t0 = millis();
+  unsigned int sample;
+  unsigned int minV = 1023;
+  unsigned int maxV = 0;
+  unsigned long sum = 0;
+  unsigned int count = 0;
+
+//Sample in
+while (millis() - t0 < SAMPLE_WINDOW_MS) {
+    sample = analogRead(sensorPin);
+    sum += sample;
+    count++;
+    if (sample < minV) minV = sample;
+    if (sample > maxV) maxV = sample;
+    // small delay helps with acquisition; tune as needed
+    // no delay = fastest possible sampling (but CPU-bound)
+  }
+
+  //calculate different voltage parameters
+  float avg_adc = (float)sum / (float)count;
+  float avg_v = (avg_adc * VREF) / ADC_RES;
+  float min_v = (minV * VREF) / ADC_RES;
+  float max_v = (maxV * VREF) / ADC_RES;
+  float p2p = max_v - min_v;
+
+  //Print out measurements/calculations
+  Serial.print("avgV: ");
+  Serial.print(avg_v, 3);
+  Serial.print(" V   min: ");
+  Serial.print(min_v, 3);
+  Serial.print(" V   max: ");
+  Serial.print(max_v, 3);
+  Serial.print(" V   p-p: ");
+  Serial.print(p2p, 3);
+  Serial.print(" V   samples: ");
+  Serial.println(count);
+
+  delay(200); // Loop delay
+}
