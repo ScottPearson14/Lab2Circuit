@@ -1,0 +1,91 @@
+//ECE Senior Design Lab 2Electric Eye Safety System, Group 11
+
+//Program configuration (I/O pins, ADC parameters, etc.)
+const int sensorPin = A0;
+const int buzzerPin = 12;
+const float VREF = 5.0;
+const int ADC_RES = 1023;
+const unsigned long SAMPLE_WINDOW_MS = 10;
+const float SIGNAL_THRESHOLD = 0.001; 
+
+// State variables (on vs off parameters)
+enum SystemState { OFF, ON };
+SystemState state = OFF;
+int consecutiveSignal = 0;  // counts consecutive readings with signal
+int consecutiveBlocks = 0;  // counts consecutive readings with no signal (while ON)
+
+//Setup function starts serial communication & confgures I/O pins
+void setup() {
+  Serial.begin(115200);
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(buzzerPin, LOW);
+  delay(200);
+}
+
+//Main loop - Calculate average voltage across sample window, use voltage for electric eye logic.
+void loop() {
+  //Parameters for voltage sampling & calculation
+  unsigned long t0 = millis();
+  unsigned int sample;
+  unsigned int minV = 1023;
+  unsigned int maxV = 0;
+  unsigned long sum = 0;
+  unsigned int count = 0;
+
+  // Voltage sampling
+  while (millis() - t0 < SAMPLE_WINDOW_MS) {
+    sample = analogRead(sensorPin);
+    sum += sample;
+    count++;
+    if (sample < minV) minV = sample;
+    if (sample > maxV) maxV = sample;
+  }
+
+  //Calculate average voltage of sample
+  float avg_adc = (float)sum / (float)count;
+  float avg_v = (avg_adc * VREF) / ADC_RES;
+
+  // Display voltage readings
+  Serial.print("Voltage: ");
+  Serial.print(avg_v, 3);
+  Serial.print("V   State: ");
+  Serial.println();
+
+  // Electric Eye logic (on vs off)
+  if (state == OFF) {    
+
+    // Look for steady IR signal
+    if (avg_v > SIGNAL_THRESHOLD) {
+      consecutiveSignal++;
+      if (consecutiveSignal >= 3) { //If we get 3 non-zero readings in a row, consider it a steady signal and turn on system
+        state = ON;
+        consecutiveBlocks = 0;
+      }
+    } else {
+      consecutiveSignal = 0; // reset if signal drops
+    }
+  } 
+  else { // ON state
+    //Look for a blocked/stopped signal
+    if (avg_v < SIGNAL_THRESHOLD) {
+      consecutiveBlocks++;
+      if (consecutiveBlocks >= 5) { //If 5 consecutive readings without a non-zero voltage reading, consider signal blocked and send alert through serial
+        Serial.println("BLOCK");
+        Serial.println();
+        
+        // Sound alert buzzer
+        digitalWrite(buzzerPin, HIGH);
+        delay(100);
+        digitalWrite(buzzerPin, LOW);
+        
+        // Return to OFF state
+        state = OFF;
+        consecutiveSignal = 0;
+        consecutiveBlocks = 0;
+      }
+    } else {
+      consecutiveBlocks = 0; // reset if signal returns
+    }
+  } 
+  delay(200); // Small loop-delay
+}
