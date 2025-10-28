@@ -1,6 +1,2 @@
 # Lab2Circuit
-Lab 2 of Senior Design
-
-
-References:
-https://www.mathworks.com/help/dsp/ug/lowpass-filter-design.html
+Lab 2 of Senior Design - "Electric Eye" Security System. IR Receiver hardware receives, amplifies, and filters infrared signal for use in a security system. Filtered signal is processed in an ATMega328P microcontroller, where signal patterns are evaluated to determine if transmission has been "broken". If transmission breaks, the keyword "BREAK" is sent to the desktop host via serial. The desktop python program reads in the controller's serial output, and sends an alert email to specified destination email address in the case of a broken transmission.
